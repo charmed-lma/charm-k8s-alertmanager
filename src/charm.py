@@ -128,7 +128,7 @@ def set_juju_pod_spec(fw_adapter):
     juju_pod_spec = build_juju_pod_spec(
         app_name=fw_adapter.get_app_name(),
         charm_config=fw_adapter.get_config(),
-        image_meta=fw_adapter.get_image_meta('alertamanager-image')
+        image_meta=fw_adapter.get_image_meta('alertmanager-image')
     )
 
     logging.debug("Configuring pod")
