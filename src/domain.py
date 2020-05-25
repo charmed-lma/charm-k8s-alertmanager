@@ -55,7 +55,7 @@ class AlertManagerJujuPodSpec:
                     'name': 'config',
                     'mountPath': '/etc/alertmanager',
                     'files': {
-                        'config.yml': ''
+                        'alertmanager.yml': ''
                     }
                 }]
             }]
