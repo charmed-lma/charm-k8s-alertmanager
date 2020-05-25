@@ -1,0 +1,25 @@
+name: "alertmanager"
+display-name: "AlertManager"
+summary: "AlertManager Operator for Kubernetes"
+maintainers:
+    - "Mark Maglana <mark.maglana@canonical.com>"
+description: |
+  Deploys and operates AlertManager on Kubernetes
+tags:
+    - "application"
+series:
+    - "kubernetes"
+provides:
+    # Alertmanager will use this interface to provide prometheus
+    # with the relevant configuration that it can append to its
+    # own configuration file.
+    prometheus-config:
+        interface: prometheus-config
+resources:
+    alertmanager-image:
+        type: oci-image
+        description: "Image used for the pod."
+storage:
+  storage:
+    type: filesystem
+    location: /alertmanager
