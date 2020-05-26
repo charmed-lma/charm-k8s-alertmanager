@@ -13,8 +13,8 @@ provides:
     # Alertmanager will use this interface to provide prometheus
     # with the relevant configuration that it can append to its
     # own configuration file.
-    prometheus-config:
-        interface: prometheus-config
+    prometheus:
+        interface: prometheus
 resources:
     alertmanager-image:
         type: oci-image

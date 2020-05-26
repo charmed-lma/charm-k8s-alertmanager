@@ -22,6 +22,7 @@ from domain import (
     build_juju_unit_status,
 )
 from adapters import k8s
+from interface_prometheus import PrometheusInterface
 
 
 # CHARM
@@ -41,12 +42,16 @@ class Charm(CharmBase):
         # From this point forward, our Charm object will only interact with the
         # adapter and not directly with the framework.
         self.fw_adapter = FrameworkAdapter(self.framework)
+
+        self.prom_interface = PrometheusInterface(self, 'prometheus')
+
         # Bind event handlers to events
         event_handler_bindings = {
             self.on.start: self.on_start,
             self.on.config_changed: self.on_config_changed,
             self.on.upgrade_charm: self.on_upgrade,
             self.on.stop: self.on_stop,
+            self.prom_interface.on.new_prom_client: self.on_new_prom_client
         }
         for event, handler in event_handler_bindings.items():
             self.fw_adapter.observe(event, handler)
@@ -65,14 +70,23 @@ class Charm(CharmBase):
     def on_config_changed(self, event):
         on_config_changed_handler(event, self.fw_adapter)
 
+    def on_new_prom_client(self, event):
+        msg = "Got event.alerting_config: {}".format(event.alerting_config)
+        logger.debug(msg)
+
+        event.alerting_config['test'] = 'test1'
+
+        msg = "Sending event.alerting_config: {}".format(event.alerting_config)
+        logger.debug(msg)
+
     def on_start(self, event):
         on_start_handler(event, self.fw_adapter)
 
-    def on_upgrade(self, event):
-        on_upgrade_handler(event, self.fw_adapter)
-
     def on_stop(self, event):
         on_stop_handler(event, self.fw_adapter)
+
+    def on_upgrade(self, event):
+        on_upgrade_handler(event, self.fw_adapter)
 
 
 # EVENT HANDLERS

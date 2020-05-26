@@ -57,6 +57,16 @@ For more info on getting started with AlertManager see [its official getting
 started guide](https://alertmanager.io/docs/alerting/overview/).
 
 
+Make Prometheus Discover AlertManager
+-------------------------------------
+
+```
+juju relate alertmanager prometheus
+```
+
+For information on deploying Prometheus, see [this charm](https://github.com/relaxdiego/charm-k8s-prometheus).
+
+
 Install Test Dependencies
 -------------------------
 
