@@ -74,13 +74,8 @@ class AlertManagerConfigFile:
     '''
 
     def __init__(self):
-        self._config_dict = {
-            'global': {},
-            'templates': [],
-            'route': {},
-            'receivers': [],
-            'inhibit_rules': []
-        }
+        with open('templates/alertmanager.yml') as am_yaml:
+            self._config_dict = yaml.safe_load(am_yaml)
 
     def yaml_dump(self):
         return yaml.dump(self._config_dict)

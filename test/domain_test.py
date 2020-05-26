@@ -43,6 +43,9 @@ class BuildJujuPodSpecTest(unittest.TestCase):
             'password': str(uuid4()),
         })
 
+        with open('templates/alertmanager.yml') as am_yaml:
+            expected_am_config = yaml.safe_load(am_yaml)
+
         # Exercise
         juju_pod_spec = domain.build_juju_pod_spec(
             app_name=mock_app_name,
@@ -82,13 +85,7 @@ class BuildJujuPodSpecTest(unittest.TestCase):
                 'name': 'config',
                 'mountPath': '/etc/alertmanager',
                 'files': {
-                    'alertmanager.yml': yaml.dump({
-                        'global': {},
-                        'templates': [],
-                        'route': {},
-                        'receivers': [],
-                        'inhibit_rules': []
-                    })
+                    'alertmanager.yml': yaml.dump(expected_am_config)
                 }
             }]
         }]}
@@ -182,17 +179,12 @@ class BuildJujuUnitStatusTest(unittest.TestCase):
         assert type(juju_unit_status) == ActiveStatus
 
 
-class BuildConfig(unittest.TestCase):
+class BuildAlertManagerConfig(unittest.TestCase):
 
     def test__it_creates_the_default_config_file(self):
-        prometheus_config = domain.build_alertmanager_config()
+        config = domain.build_alertmanager_config()
 
-        expected_config = {
-            'global': {},
-            'templates': [],
-            'route': {},
-            'receivers': [],
-            'inhibit_rules': []
-        }
+        with open('templates/alertmanager.yml') as am_yaml:
+            expected_config = yaml.safe_load(am_yaml)
 
-        assert yaml.safe_load(prometheus_config.yaml_dump()) == expected_config
+        assert yaml.safe_load(config.yaml_dump()) == expected_config
