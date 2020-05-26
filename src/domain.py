@@ -62,10 +62,10 @@ class AlertManagerJujuPodSpec:
         }
 
     def to_dict(self):
-        final_dict = copy.deepcopy(self._spec)
-        final_dict['containers'][0]['files'][0]['files']['config.yml'] = \
+        final = copy.deepcopy(self._spec)
+        final['containers'][0]['files'][0]['files']['alertmanager.yml'] = \
             self._alertmanager_config.yaml_dump()
-        return final_dict
+        return final
 
 
 class AlertManagerConfigFile:
@@ -100,7 +100,7 @@ def build_juju_pod_spec(app_name,
     # option and making it statically default to its typical 9090
     advertised_port = 9093
 
-    prom_config = build_alertmanager_config()
+    config = build_alertmanager_config()
 
     spec = AlertManagerJujuPodSpec(
         app_name=app_name,
@@ -108,7 +108,7 @@ def build_juju_pod_spec(app_name,
         repo_username=image_meta.repo_username,
         repo_password=image_meta.repo_password,
         advertised_port=advertised_port,
-        alertmanager_config=prom_config)
+        alertmanager_config=config)
 
     return spec
 
