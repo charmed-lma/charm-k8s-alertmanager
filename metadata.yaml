@@ -14,7 +14,7 @@ provides:
     # with the relevant configuration that it can append to its
     # own configuration file.
     prometheus:
-        interface: prometheus
+        interface: prometheus-alerting-config
 resources:
     alertmanager-image:
         type: oci-image

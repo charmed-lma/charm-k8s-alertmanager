@@ -1,4 +1,6 @@
 import copy
+import json
+import logging
 import yaml
 
 import sys
@@ -8,6 +10,8 @@ from ops.model import (
     ActiveStatus,
     MaintenanceStatus,
 )
+
+logger = logging.getLogger()
 
 
 # DOMAIN MODELS
@@ -22,7 +26,6 @@ class AlertManagerJujuPodSpec:
                  advertised_port,
                  alertmanager_config):
 
-        self._alertmanager_config = alertmanager_config
         self._spec = {
             'containers': [{
                 'name': app_name,
@@ -55,7 +58,7 @@ class AlertManagerJujuPodSpec:
                     'name': 'config',
                     'mountPath': '/etc/alertmanager',
                     'files': {
-                        'alertmanager.yml': ''
+                        'alertmanager.yml': alertmanager_config.yaml_dump()
                     }
                 }]
             }]
@@ -63,8 +66,6 @@ class AlertManagerJujuPodSpec:
 
     def to_dict(self):
         final = copy.deepcopy(self._spec)
-        final['containers'][0]['files'][0]['files']['alertmanager.yml'] = \
-            self._alertmanager_config.yaml_dump()
         return final
 
 
@@ -79,6 +80,43 @@ class AlertManagerConfigFile:
 
     def yaml_dump(self):
         return yaml.dump(self._config_dict)
+
+
+class PrometheusAlertingConfig:
+    '''
+    See the alerting section of:
+    https://prometheus.io/docs/prometheus/latest/configuration/configuration
+    '''
+
+    def __init__(self, namespace, label_selector):
+        self.config_dict = {
+            'alertmanagers': [
+                {
+                    'kubernetes_sd_configs': [
+                        {
+                            'role': 'pod',
+                            'namespaces': {
+                                'names': [
+                                    namespace
+                                ]
+                            },
+                            'selectors': [
+                                {
+                                    'role': 'pod',
+                                    'label': label_selector
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+
+    def __repr__(self):
+        return self.to_json()
+
+    def to_json(self):
+        return json.dumps(self.config_dict)
 
 
 # DOMAIN SERVICES

@@ -87,8 +87,14 @@ class FrameworkAdapter:
     def get_model_name(self):
         return os.environ["JUJU_MODEL_NAME"]
 
+    def get_relations(self, relation_name):
+        return self._framework.model.relations[relation_name]
+
     def get_resources_repo(self):
         return self._framework.model.resources
+
+    def get_unit(self):
+        return self._framework.model.unit
 
     def get_unit_name(self):
         return os.environ["JUJU_UNIT_NAME"]

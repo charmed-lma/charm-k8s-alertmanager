@@ -20,6 +20,7 @@ from adapters.framework import FrameworkAdapter
 from domain import (
     build_juju_pod_spec,
     build_juju_unit_status,
+    PrometheusAlertingConfig,
 )
 from adapters import k8s
 from interface_prometheus import PrometheusInterface
@@ -43,7 +44,9 @@ class Charm(CharmBase):
         # adapter and not directly with the framework.
         self.fw_adapter = FrameworkAdapter(self.framework)
 
-        self.prom_interface = PrometheusInterface(self, 'prometheus')
+        self.prom_relation_name = 'prometheus'
+        self.prom_interface = \
+            PrometheusInterface(self, self.prom_relation_name)
 
         # Bind event handlers to events
         event_handler_bindings = {
@@ -51,7 +54,7 @@ class Charm(CharmBase):
             self.on.config_changed: self.on_config_changed,
             self.on.upgrade_charm: self.on_upgrade,
             self.on.stop: self.on_stop,
-            self.prom_interface.on.new_prom_client: self.on_new_prom_client
+            self.prom_interface.on.new_prom_rel: self.on_new_prom_rel
         }
         for event, handler in event_handler_bindings.items():
             self.fw_adapter.observe(event, handler)
@@ -70,14 +73,10 @@ class Charm(CharmBase):
     def on_config_changed(self, event):
         on_config_changed_handler(event, self.fw_adapter)
 
-    def on_new_prom_client(self, event):
-        msg = "Got event.alerting_config: {}".format(event.alerting_config)
-        logger.debug(msg)
-
-        event.alerting_config['test'] = 'test1'
-
-        msg = "Sending event.alerting_config: {}".format(event.alerting_config)
-        logger.debug(msg)
+    def on_new_prom_rel(self, event):
+        on_new_prom_rel_handler(event,
+                                self.fw_adapter,
+                                self.prom_relation_name)
 
     def on_start(self, event):
         on_start_handler(event, self.fw_adapter)
@@ -119,6 +118,26 @@ def on_config_changed_handler(event, fw_adapter):
         fw_adapter.set_unit_status(juju_unit_status)
         pod_is_ready = isinstance(juju_unit_status, ActiveStatus)
         time.sleep(1)
+
+
+def on_new_prom_rel_handler(event, fw_adapter, relation_name):
+    logger.debug("on_new_prom_rel_handler")
+    juju_model = fw_adapter.get_model_name()
+    juju_app = fw_adapter.get_app_name()
+    label_selector = 'juju-app={}'.format(juju_app)
+
+    alerting_config = PrometheusAlertingConfig(
+        namespace=juju_model,
+        label_selector=label_selector
+    )
+
+    logger.debug("Built alerting_config: {}".format(alerting_config))
+
+    for relation in fw_adapter.get_relations(relation_name):
+        logger.debug("Setting alerting_config for {}".format(relation))
+        relation.data[fw_adapter.get_unit()].update({
+            'alerting_config': alerting_config.to_json()
+        })
 
 
 def on_start_handler(event, fw_adapter):

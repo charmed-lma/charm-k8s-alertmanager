@@ -3,6 +3,7 @@ import unittest
 from unittest.mock import (
     call,
     create_autospec,
+    MagicMock,
     patch
 )
 from uuid import uuid4
@@ -81,6 +82,49 @@ class OnConfigChangedHandlerTest(unittest.TestCase):
         assert mock_fw_adapter.set_unit_status.call_args_list == [
             call(status) for status in mock_juju_unit_states
         ]
+
+
+class OnNewPromRelHandlerTest(unittest.TestCase):
+
+    @patch('charm.PrometheusAlertingConfig', spec_set=True, autospec=True)
+    def test__it_sets_the_relation_data_correctly(
+            self,
+            mock_prometheus_alerting_config_cls):
+        # Setup
+        mock_alerting_conf = mock_prometheus_alerting_config_cls.return_value
+        mock_fw_adapter_cls = \
+            create_autospec(framework.FrameworkAdapter,
+                            spec_set=True)
+        mock_fw_adapter = mock_fw_adapter_cls.return_value
+        mock_fw_adapter.am_i_leader.return_value = True
+        mock_fw_adapter.get_model_name.return_value = str(uuid4())
+        mock_fw_adapter.get_app_name.return_value = str(uuid4())
+
+        mock_relation1 = MagicMock()
+        mock_data_bag = MagicMock()
+        mock_relation1.data = \
+            {mock_fw_adapter.get_unit.return_value: mock_data_bag}
+
+        relations = MagicMock()
+        relations.__iter__.return_value = [
+            mock_relation1,
+        ]
+        mock_fw_adapter.get_relations.return_value = relations
+
+        mock_event_cls = create_autospec(EventBase, spec_set=True)
+        mock_event = mock_event_cls.return_value
+
+        mock_rel_name = str(uuid4())
+
+        # Exercise
+        charm.on_new_prom_rel_handler(mock_event,
+                                      mock_fw_adapter,
+                                      mock_rel_name)
+
+        # Assert
+        assert mock_data_bag.update.call_count == 1
+        assert mock_data_bag.update.call_args == \
+            call({'alerting_config': mock_alerting_conf.to_json.return_value})
 
 
 class OnStartHandlerTest(unittest.TestCase):
