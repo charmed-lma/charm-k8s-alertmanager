@@ -130,7 +130,9 @@ class OnNewPromRelHandlerTest(unittest.TestCase):
 class OnStartHandlerTest(unittest.TestCase):
 
     @patch('charm.build_juju_pod_spec', spec_set=True, autospec=True)
+    @patch('charm.build_alertmanager_config', spec_set=True, autospec=True)
     def test__it_updates_the_juju_pod_spec(self,
+                                           mock_build_am_config_func,
                                            mock_build_juju_pod_spec_func):
         # Setup
         mock_fw_adapter_cls = \
@@ -153,7 +155,8 @@ class OnStartHandlerTest(unittest.TestCase):
         assert mock_build_juju_pod_spec_func.call_args == \
             call(app_name=mock_fw.get_app_name.return_value,
                  charm_config=mock_fw.get_config.return_value,
-                 image_meta=mock_fw.get_image_meta.return_value)
+                 image_meta=mock_fw.get_image_meta.return_value,
+                 alertmanager_config=mock_build_am_config_func.return_value)
 
         assert mock_fw.set_pod_spec.call_count == 1
         assert mock_fw.set_pod_spec.call_args == \

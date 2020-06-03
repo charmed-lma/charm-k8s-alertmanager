@@ -1,3 +1,4 @@
+from base64 import b64encode
 import json
 import sys
 import unittest
@@ -18,6 +19,95 @@ from adapters.k8s import (
 from adapters.framework import (
     ImageMeta,
 )
+
+
+class BuildAlertManagerConfig(unittest.TestCase):
+
+    def test__it_creates_the_default_config_file(self):
+        # Setup
+        with open('templates/alertmanager-config-default.yml') as am_yaml:
+            expected_config = yaml.safe_load(am_yaml)
+
+        # Exercise
+        config = domain.build_alertmanager_config("", "")
+
+        # Assert
+        assert yaml.safe_load(config.yaml_dump()) == expected_config
+
+    def test__it_loads_a_base64_encoded_yaml_from_alertmanager_config(self):
+        # Setup
+        expected_config = {
+            str(uuid4()): str(uuid4()),
+            str(uuid4()): str(uuid4()),
+            str(uuid4()): str(uuid4()),
+        }
+        base64_config_yaml = \
+            b64encode(bytes(yaml.dump(expected_config), 'utf-8'))
+
+        # Exercise
+        config = domain.build_alertmanager_config(base64_config_yaml, "")
+
+        # Assert
+        assert yaml.safe_load(config.yaml_dump()) == expected_config
+
+    def test__it_loads_a_base64_encoded_yaml_from_alertmanager_secrets(self):
+        # Setup
+        with open('templates/alertmanager-config-default.yml') as am_yaml:
+            expected_config = yaml.safe_load(am_yaml)
+        secrets = {
+            str(uuid4()): str(uuid4()),
+            str(uuid4()): str(uuid4()),
+            str(uuid4()): str(uuid4()),
+        }
+        expected_config.update(secrets)
+
+        base64_secrets_yaml = \
+            b64encode(bytes(yaml.dump(expected_config), 'utf-8'))
+
+        # Exercise
+        config = domain.build_alertmanager_config("", base64_secrets_yaml)
+
+        # Assert
+        assert yaml.safe_load(config.yaml_dump()) == expected_config
+
+    def test__secrets_always_take_precedence(self):
+        # Setup
+        common_key = str(uuid4())
+        common_key_value_in_config = str(uuid4())
+        common_key_value_in_secrets = str(uuid4())
+
+        config = {
+            str(uuid4()): str(uuid4()),
+            str(uuid4()): str(uuid4()),
+            str(uuid4()): str(uuid4()),
+            common_key: common_key_value_in_config,
+        }
+        secrets = {
+            str(uuid4()): str(uuid4()),
+            str(uuid4()): str(uuid4()),
+            str(uuid4()): str(uuid4()),
+            common_key: common_key_value_in_secrets,
+        }
+
+        # Build a new dict without the common key
+        expected_config = {k: v for k, v
+                           in dict(config, **secrets).items()
+                           if k != common_key}
+        # Then add back the common key with the secrets value
+        expected_config[common_key] = common_key_value_in_secrets
+
+        base64_config_yaml = \
+            b64encode(bytes(yaml.dump(config), 'utf-8'))
+
+        base64_secrets_yaml = \
+            b64encode(bytes(yaml.dump(secrets), 'utf-8'))
+
+        # Exercise
+        config = domain.build_alertmanager_config(base64_config_yaml,
+                                                  base64_secrets_yaml)
+
+        # Assert
+        assert yaml.safe_load(config.yaml_dump()) == expected_config
 
 
 class BuildJujuPodSpecTest(unittest.TestCase):
@@ -43,14 +133,14 @@ class BuildJujuPodSpecTest(unittest.TestCase):
             'password': str(uuid4()),
         })
 
-        with open('templates/alertmanager.yml') as am_yaml:
-            expected_am_config = yaml.safe_load(am_yaml)
+        am_config = domain.AlertManagerConfigFile({str(uuid4()): str(uuid4())})
 
         # Exercise
         juju_pod_spec = domain.build_juju_pod_spec(
             app_name=mock_app_name,
             charm_config=mock_config,
-            image_meta=mock_image_meta)
+            image_meta=mock_image_meta,
+            alertmanager_config=am_config)
 
         # Assertions
         assert isinstance(juju_pod_spec, domain.AlertManagerJujuPodSpec)
@@ -85,7 +175,7 @@ class BuildJujuPodSpecTest(unittest.TestCase):
                 'name': 'config',
                 'mountPath': '/etc/alertmanager',
                 'files': {
-                    'alertmanager.yml': yaml.dump(expected_am_config)
+                    'alertmanager.yml': am_config.yaml_dump()
                 }
             }]
         }]}
@@ -177,14 +267,3 @@ class BuildJujuUnitStatusTest(unittest.TestCase):
 
         # Assertions
         assert type(juju_unit_status) == ActiveStatus
-
-
-class BuildAlertManagerConfig(unittest.TestCase):
-
-    def test__it_creates_the_default_config_file(self):
-        config = domain.build_alertmanager_config()
-
-        with open('templates/alertmanager.yml') as am_yaml:
-            expected_config = yaml.safe_load(am_yaml)
-
-        assert yaml.safe_load(config.yaml_dump()) == expected_config

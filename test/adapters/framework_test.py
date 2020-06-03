@@ -19,12 +19,14 @@ from ops.framework import (
 )
 from ops.model import (
     BlockedStatus,
+    ModelError,
     Resources,
 )
 
 sys.path.append('src')
 from adapters.framework import (
     _fetch_image_meta,
+    _read_resource_file,
     FrameworkAdapter,
     ResourceError,
 )
@@ -135,6 +137,92 @@ class FetchImageMetaTest(unittest.TestCase):
             assert err.status.message == \
                 '{}: Invalid YAML at ' \
                 '{}'.format(mock_image_name,
+                            str(mock_path_obj))
+
+
+class ReadResourceFileTest(unittest.TestCase):
+
+    def test__successful(self):
+        # Setup
+        mock_resource_name = str(uuid4())
+        mock_file_contents = str(uuid4())
+
+        mock_path_obj = create_autospec(Path, spec_set=True)
+        mock_path_obj.exists.return_value = True
+        mock_path_obj.read_text.return_value = mock_file_contents
+
+        mock_resources_repo = create_autospec(Resources, set_spec=True)
+        mock_resources_repo.fetch.return_value = mock_path_obj
+
+        # Exercise
+        file_contents = _read_resource_file(mock_resource_name,
+                                            mock_resources_repo)
+
+        # Assert
+        assert file_contents == mock_file_contents
+
+    def test__resource_does_not_exist(self):
+        # Setup
+        mock_resource_name = str(uuid4())
+
+        mock_path_obj = create_autospec(Path, spec_set=True)
+        mock_path_obj.exists.return_value = False
+
+        mock_resources_repo = create_autospec(Resources, set_spec=True)
+        mock_error = ModelError(str(uuid4()))
+        mock_resources_repo.fetch.side_effect = mock_error
+
+        # Exercise
+        with pytest.raises(ResourceError) as err:
+            _read_resource_file(mock_resource_name,
+                                mock_resources_repo)
+
+            assert type(err.status) == BlockedStatus
+            assert err.status.message == \
+                "Resource '{}' does not exist: {}".format(mock_resource_name,
+                                                          mock_error)
+
+    def test__resource_not_found_at_path(self):
+        # Setup
+        mock_resource_name = str(uuid4())
+
+        mock_path_obj = create_autospec(Path, spec_set=True)
+        mock_path_obj.exists.return_value = False
+
+        mock_resources_repo = create_autospec(Resources, set_spec=True)
+        mock_resources_repo.fetch.return_value = mock_path_obj
+
+        # Exercise
+        with pytest.raises(ResourceError) as err:
+            _read_resource_file(mock_resource_name,
+                                mock_resources_repo)
+
+            assert type(err.status) == BlockedStatus
+            assert err.status.message == \
+                '{}: Resource not found at ' \
+                '{}'.format(mock_resource_name,
+                            str(mock_path_obj))
+
+    def test__path_is_unreadable(self):
+        # Setup
+        mock_resource_name = str(uuid4())
+
+        mock_path_obj = create_autospec(Path, spec_set=True)
+        mock_path_obj.exists.return_value = True
+        mock_path_obj.read_text.return_value = None
+
+        mock_resources_repo = create_autospec(Resources, set_spec=True)
+        mock_resources_repo.fetch.return_value = mock_path_obj
+
+        # Exercise
+        with pytest.raises(ResourceError) as err:
+            _read_resource_file(mock_resource_name,
+                                mock_resources_repo)
+
+            assert type(err.status) == BlockedStatus
+            assert err.status.message == \
+                '{}: Resource unreadable at ' \
+                '{}'.format(mock_resource_name,
                             str(mock_path_obj))
 
 

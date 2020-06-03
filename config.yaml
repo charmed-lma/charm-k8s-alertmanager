@@ -1,13 +1,38 @@
 options:
-  smtp_smarthost:
+  # AlertManager Configuration Guide: https://prometheus.io/docs/alerting/configuration/
+  alertmanager-config:
+    type: string
+    default: ""
     description: |
-      The default SMTP smarthost used for sending emails, including port number.
-      Port number usually is 25, or 587 for SMTP over TLS (sometimes referred to as STARTTLS).
-      Example: smtp.example.org:587
-  smtp_from:
-    description: The default SMTP From header field.
-  smtp_auth_username:
-    description: SMTP Auth using CRAM-MD5, LOGIN and PLAIN. If empty, Alertmanager doesn't authenticate to the SMTP server.
-  smtp_auth_password:
-    description: SMTP Auth using LOGIN and PLAIN.
+      Optional base64-encoded AlertManager YAML configuration. For guidance on
+      the structure of this string, refer to the official AlertManager guide at
+      https://prometheus.io/docs/alerting/configuration. If you are concerned
+      about placing secrets in this configuration (perhaps because you're
+      committing the underlying YAML file to a shared git repo), you may
+      optionally use the alertmanager-secrets option alongside this one.
 
+      If you don't provide a value for this option, a default configuration
+      file will be loaded which will be enough to quickly get a running
+      instance of AlertManager for evaluation/educational purposes.
+
+      Example usage: --option alertmanager-config=$(base64 -w0 config.yml)
+  # AlertManager Configuration Guide: https://prometheus.io/docs/alerting/configuration/
+  alertmanager-secrets:
+    type: string
+    default: ""
+    description: |
+      Optional base64-encoded AlertManager YAML configuration subset that
+      contains secrets. For guidance on the structure of this string, refer to the
+      official AlertManager guide at https://prometheus.io/docs/alerting/configuration.
+
+      This string will be merged with the contents of alertmanager-config to
+      form the final AlertManager configuration file. If there are duplicate
+      keys between alertmanager-config and alertmanager-secrets, the values in
+      the latter will take precedence.
+
+      For added security, ensure that the underlying YAML file is located in
+      your $HOME dir and not in a shared git repository. If sharing is
+      necessary, use a more secure method such as 1Password or AWS S3 with the
+      appropriate IAM policies in place.
+
+      Example usage: --option alertmanager-secrets=$(base64 -w0 secrets.yml)
