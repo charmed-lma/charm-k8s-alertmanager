@@ -8,7 +8,7 @@ Click on each badge for more details.
 
 | Branch | Build Status | Coverage |
 |--------|--------------|----------|
-| master | [![Build Status (master)](https://travis-ci.org/relaxdiego/charm-k8s-alertmanager.svg?branch=master)](https://travis-ci.org/relaxdiego/charm-k8s-alertmanager) | [![Coverage Status](https://coveralls.io/repos/github/relaxdiego/charm-k8s-alertmanager/badge.svg?branch=master)](https://coveralls.io/github/relaxdiego/charm-k8s-alertmanager?branch=master) |
+| master | [![Build Status (master)](https://travis-ci.org/charmed-lma/charm-k8s-alertmanager.svg?branch=master)](https://travis-ci.org/charmed-lma/charm-k8s-alertmanager) | [![Coverage Status](https://coveralls.io/repos/github/charmed-lma/charm-k8s-alertmanager/badge.svg?branch=master)](https://coveralls.io/github/charmed-lma/charm-k8s-alertmanager?branch=master) |
 
 
 Quick Start
@@ -64,7 +64,15 @@ Make Prometheus Discover AlertManager
 juju relate alertmanager prometheus
 ```
 
-For information on deploying Prometheus, see [this charm](https://github.com/relaxdiego/charm-k8s-prometheus).
+For information on deploying Prometheus, see [this charm](https://github.com/charmed-lma/charm-k8s-prometheus).
+
+
+This Charm's Architecture
+-------------------------
+
+To learn how to navigate this charm's code and become an effective contributor,
+please read the [Charmed LMA Operators Architecture](https://docs.google.com/document/d/1V5cA9D1YN8WGEClpLhUwQt2dYrg5VZEY99LZiE6Mx_A/edit?usp=sharing)
+reference doc.
 
 
 Install Test Dependencies
@@ -95,7 +103,6 @@ sudo apt install build-essential libssl-dev zlib1g-dev libbz2-dev \
 4. Install Python 3.6.x and 3.7.x
 
 ```
-pyenv install 3.5.X
 pyenv install 3.6.X
 pyenv install 3.7.X
 ```
