@@ -1,3 +1,4 @@
+import logging
 from ops.framework import Object
 from ops.model import (
     BlockedStatus,
@@ -5,6 +6,8 @@ from ops.model import (
 )
 import os
 import yaml
+
+logger = logging.getLogger()
 
 
 # MODELS
@@ -58,6 +61,32 @@ def _fetch_image_meta(image_name, resources_repo):
         return ImageMeta(resource_dict=resource_dict)
 
 
+def _read_resource_file(resource_name, resources_repo):
+    logger.debug("Fetch path for resource {}".format(resource_name))
+
+    try:
+        path = resources_repo.fetch(resource_name)
+    except ModelError as err:
+        msg = "Resource '{}' does not exist: {}".format(resource_name, err)
+        logger.error(msg)
+        raise ResourceError(resource_name, msg)
+
+    if not path.exists():
+        msg = "Resource not found at {}".format(path)
+        logger.error(msg)
+        raise ResourceError(resource_name, msg)
+
+    logger.debug("Resource found at {}".format(path))
+
+    file_contents = path.read_text()
+
+    if file_contents:
+        return file_contents
+    else:
+        msg = "Resource unreadable at {}".format(path)
+        raise ResourceError(resource_name, msg)
+
+
 class FrameworkAdapter:
     '''
     Abstracts out the implementation details of the underlying framework
@@ -89,6 +118,9 @@ class FrameworkAdapter:
 
     def get_relations(self, relation_name):
         return self._framework.model.relations[relation_name]
+
+    def read_resource_file(self, resource_name):
+        return _read_resource_file(resource_name, self.get_resources_repo())
 
     def get_resources_repo(self):
         return self._framework.model.resources

@@ -18,6 +18,7 @@ from ops.model import (
 
 from adapters.framework import FrameworkAdapter
 from domain import (
+    build_alertmanager_config,
     build_juju_pod_spec,
     build_juju_unit_status,
     PrometheusAlertingConfig,
@@ -157,11 +158,20 @@ def set_juju_pod_spec(fw_adapter):
         logging.debug("Unit is not a leader, skip pod spec configuration")
         return
 
+    charm_config = fw_adapter.get_config()
+
+    logging.debug("Building AlertManager config file")
+    alertmanager_config = build_alertmanager_config(
+        base64_config_yaml=charm_config["alertmanager-config"],
+        base64_secrets_yaml=charm_config["alertmanager-secrets"]
+    )
+
     logging.debug("Building Juju pod spec")
     juju_pod_spec = build_juju_pod_spec(
         app_name=fw_adapter.get_app_name(),
-        charm_config=fw_adapter.get_config(),
-        image_meta=fw_adapter.get_image_meta('alertmanager-image')
+        charm_config=charm_config,
+        image_meta=fw_adapter.get_image_meta('alertmanager-image'),
+        alertmanager_config=alertmanager_config
     )
 
     logging.debug("Configuring pod")
