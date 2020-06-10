@@ -17,7 +17,8 @@ Quick Start
 Do this first
 
 ```
-git submodule update --init --recursive
+curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
+poetry install
 ```
 Now this:
 

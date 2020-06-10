@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "charm-k8s-alertmanager"
+version = "0.1.0"
+description = "Kubernetes Operator for AlertManager"
+authors = ["Mark Maglana <mark.maglana@canonical.com>", "Vladimir Grevstev <vladimir.grevstev@canonical.com>"]
+license = "Apache License 2.0"
+
+[tool.poetry.dependencies]
+python = "^3.6"
+pyaml = "^20.4.0"
+ops = {git = "https://github.com/canonical/operator.git", rev = "0.6.1"}
+
+[tool.poetry.dev-dependencies]
+pyaml = "^20.4.0"
+pytest = "^5.4.3"
+pytest-cov = "^2.9.0"
+pytest-randomly = "^3.4.0"
+randomly = "^0.1.5"
+
+[build-system]
+requires = ["poetry>=3.0"]
+build-backend = "poetry.masonry.api"
