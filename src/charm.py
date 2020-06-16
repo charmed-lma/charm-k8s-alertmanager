@@ -2,10 +2,7 @@
 import logging
 
 logger = logging.getLogger()
-import sys
 import time
-
-sys.path.append('lib')
 
 from ops.charm import (
     CharmBase,

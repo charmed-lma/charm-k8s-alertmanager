@@ -4,9 +4,6 @@ import json
 import logging
 import yaml
 
-import sys
-sys.path.append('lib')
-
 from ops.model import (
     ActiveStatus,
     MaintenanceStatus,

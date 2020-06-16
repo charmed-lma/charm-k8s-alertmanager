@@ -1,0 +1,2 @@
+#!/bin/bash
+pip install --require-hashes -r requirements/runtime.txt
