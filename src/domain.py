@@ -35,10 +35,34 @@ class AlertManagerJujuPodSpec:
                     'username': repo_username,
                     'password': repo_password
                 },
-                'ports': [{
-                    'containerPort': advertised_port,
-                    'protocol': 'TCP'
-                }],
+                'args': [
+                    '--config.file=/etc/alertmanager/alertmanager.yml',
+                    '--storage.path=/alertmanager',
+                    '--cluster.listen-address=0.0.0.0:9094',
+                    # Note that this is only ever needed during cluster
+                    # initialization. Once the cluster has settled, every peer
+                    # will "gossip" with three other peers (as per the gossip
+                    # protocol) to ensure that they all know about healthy and
+                    # unhealthy peers and act accordingly.
+                    '--cluster.peer=alertmanager-0.alertmanager-endpoints:9094'
+                ],
+                'ports': [
+                    {
+                        'name': 'web',
+                        'containerPort': advertised_port,
+                        'protocol': 'TCP'
+                    },
+                    {
+                        'name': 'peering-tcp',
+                        'containerPort': 9094,
+                        'protocol': 'TCP'
+                    },
+                    {
+                        'name': 'peering-udp',
+                        'containerPort': 9094,
+                        'protocol': 'UDP'
+                    }
+                ],
                 'readinessProbe': {
                     'httpGet': {
                         'path': '/-/ready',

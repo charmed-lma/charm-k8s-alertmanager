@@ -151,10 +151,29 @@ class BuildJujuPodSpecTest(unittest.TestCase):
                 'username': mock_image_meta.repo_username,
                 'password': mock_image_meta.repo_password
             },
-            'ports': [{
-                'containerPort': 9093,
-                'protocol': 'TCP'
-            }],
+            'args': [
+                '--config.file=/etc/alertmanager/alertmanager.yml',
+                '--storage.path=/alertmanager',
+                '--cluster.listen-address=0.0.0.0:9094',
+                '--cluster.peer=alertmanager-0.alertmanager-endpoints:9094'
+            ],
+            'ports': [
+                {
+                    'name': 'web',
+                    'containerPort': 9093,
+                    'protocol': 'TCP'
+                },
+                {
+                    'name': 'peering-tcp',
+                    'containerPort': 9094,
+                    'protocol': 'TCP'
+                },
+                {
+                    'name': 'peering-udp',
+                    'containerPort': 9094,
+                    'protocol': 'UDP'
+                }
+            ],
             'readinessProbe': {
                 'httpGet': {
                     'path': '/-/ready',
